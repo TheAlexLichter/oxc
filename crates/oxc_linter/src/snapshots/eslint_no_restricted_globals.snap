@@ -367,6 +367,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a local variable or function parameter instead of the restricted global.
 
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:8]
+ 1 │ window[foo]
+   ·        ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:5]
+ 1 │ obj[foo]
+   ·     ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
    ╭─[no_restricted_globals.tsx:1:9]
  1 │ window?.foo()
    ·         ───

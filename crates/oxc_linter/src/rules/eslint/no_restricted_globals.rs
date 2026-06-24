@@ -260,13 +260,6 @@ fn is_ident_property(ident: &IdentifierReference, kind: &AstKind) -> bool {
         AstKind::StaticMemberExpression(expression) => {
             expression.property.node_id() == ident.node_id()
         }
-        AstKind::ComputedMemberExpression(expression) => {
-            let Expression::Identifier(ident_ref) = &expression.expression else {
-                return false;
-            };
-
-            ident_ref.node_id() == ident.node_id()
-        }
         _ => false,
     }
 }
@@ -680,6 +673,16 @@ fn test() {
                 serde_json::json!([ { "globals": ["foo"], "checkGlobalObject": true, "globalObjects": ["myGlobal"], }, ]),
             ),
             Some(json!({"globals": { "myGlobal": "readonly" }})),
+        ),
+        (
+            "window[foo]",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            Some(json!({"env": { "browser": true}})),
+        ),
+        (
+            "obj[foo]",
+            Some(serde_json::json!([{ "globals": ["foo"], "checkGlobalObject": true }])),
+            None,
         ),
         (
             "window?.foo()",
