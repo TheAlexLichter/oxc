@@ -172,9 +172,9 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn from_value_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        let allocator = allocator.allocator();
-        let boxed = Box::new_in(value, &allocator);
-        Self::from_box_in(boxed, &allocator)
+        let mut vec = InnerVec::with_capacity_in(1, allocator.allocator().arena());
+        vec.push(value);
+        Self(vec)
     }
 
     /// Create a new [`Vec`] from a fixed-size array, allocated in the given `allocator`.
@@ -213,9 +213,7 @@ impl<'alloc, T> Vec<'alloc, T> {
 
     /// Convert a [`Box<T>`] into a [`Vec<T>`] containing the single `T`.
     ///
-    /// `allocator` should usually be the original allocator the `Box` was allocated in.
-    /// The lifetime of the returned `Vec` is the intersection of the lifetimes of the allocator
-    /// that the `Box` was originally allocated in, and the provided `allocator`.
+    /// The `Box` is consumed, and its value is moved into a `Vec` buffer allocated in `allocator`.
     ///
     /// # Examples
     ///
@@ -263,16 +261,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn from_box_in<A: GetAllocator<'alloc>>(boxed: Box<'alloc, T>, allocator: &A) -> Self {
-        let ptr = Box::into_non_null(boxed).as_ptr();
-        // SAFETY: `boxed` owns its backing memory which comprises 1 valid initialized `T`.
-        // A `Vec` with length 1, capacity 1 owns the same memory.
-        // `allocator` is not necessarily the same `Allocator` the box was allocated in, but the signature
-        // ties both `boxed` and `allocator` to the lifetime `'alloc` of the returned `Vec`.
-        // So both the original allocator and `allocator` outlive the returned `Vec`.
-        // The single element stays valid (it lives in the original allocator) for the lifetime of the returned `Vec`.
-        // If the `Vec` is grown later, it reallocates in `allocator`. Both outlive the `Vec`, so either way the memory
-        // is valid for the whole life of the returned `Vec`.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, 1, 1, allocator.allocator().arena()) };
+        let mut vec = InnerVec::with_capacity_in(1, allocator.allocator().arena());
+        vec.push(boxed.unbox());
         Self(vec)
     }
 
